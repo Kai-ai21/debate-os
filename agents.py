@@ -228,43 +228,45 @@ def run_debate(decision: str, context: str = "") -> dict:
 
     return debate_state
 
-result = run_debate(
-    "Should we rebuild our monolith as microservices?",
-    "50k daily users, 8 engineers, deployment painful"
-)
+if __name__ == "__main__":
 
-print("\n" + "=" * 60)
-print("PROPONENT OUTPUT")
-print("=" * 60)
-print(result["proponent_output"])
-
-print("\n" + "=" * 60)
-print("CRITIC OUTPUT")
-print("=" * 60)
-print(result["critic_output"])
-
-print("\n" + "=" * 60)
-print("MODERATOR OUTPUT")
-print("=" * 60)
-
-print(
-    json.dumps(
-        result["moderator_output"],
-        indent=2
+    result = run_debate(
+        "Should we rebuild our monolith as microservices?",
+        "50k daily users, 8 engineers, deployment painful"
     )
-)
 
-print(
-    f"\n⚖️ Verdict: "
-    f"{result['moderator_output'].get('verdict', 'N/A')}"
-)
+    print("\n" + "=" * 60)
+    print("PROPONENT OUTPUT")
+    print("=" * 60)
+    print(result["proponent_output"])
 
-print(
-    f"📊 Confidence: "
-    f"{result['moderator_output'].get('confidence_score', '?')}/10"
-)
+    print("\n" + "=" * 60)
+    print("CRITIC OUTPUT")
+    print("=" * 60)
+    print(result["critic_output"])
 
-print(
-    f"📈 Lean: "
-    f"{result['moderator_output'].get('lean', 'NEUTRAL')}"
-)
+    print("\n" + "=" * 60)
+    print("MODERATOR OUTPUT")
+    print("=" * 60)
+
+    print(
+        json.dumps(
+            result["moderator_output"],
+            indent=2
+        )
+    )
+
+    print(
+        f"\n⚖️ Verdict: "
+        f"{result['moderator_output'].get('verdict', 'N/A')}"
+    )
+
+    print(
+        f"📊 Confidence: "
+        f"{result['moderator_output'].get('confidence_score', '?')}/10"
+    )
+
+    print(
+        f"📈 Lean: "
+        f"{result['moderator_output'].get('lean', 'NEUTRAL')}"
+    )
