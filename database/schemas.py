@@ -30,7 +30,15 @@ class DebateCreate(BaseModel):
         description="The debate topic or question"
     )
 
-
+class DebateUpdate(BaseModel):
+    topic: Optional[str] = None
+    context: Optional[str] = None
+    proponent_argument: Optional[str] = None
+    critic_argument: Optional[str] = None
+    moderator_verdict: Optional[str] = None
+    decision: Optional[str] = None
+    confidence_score: Optional[float] = None
+    lean: Optional[str] = None
 # ─────────────────────────────────────────────
 # DebateResponse
 #

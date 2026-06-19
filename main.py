@@ -9,6 +9,10 @@ import traceback
 
 from graph import build_debate_graph, DebateState
 
+from database.database import SessionLocal          # ← NEW
+from database import crud, schemas 
+print("Schemas file:", schemas.__file__)                 # ← NEW
+
 
 # ===================== CREATE APP =====================
 
@@ -62,8 +66,6 @@ async def root():
 @app.post("/debate")
 async def run_debate(request: DebateRequest):
 
-    # Business validation
-
     if not request.decision.strip():
         raise HTTPException(
             status_code=400,
@@ -86,6 +88,13 @@ async def run_debate(request: DebateRequest):
 
     async def event_stream():
 
+        # ── Accumulate state across stream steps ──────────── ← NEW
+        accumulated = {                                        # ← NEW
+            "proponent_output": "",                           # ← NEW
+            "critic_output": "",                              # ← NEW
+            "moderator_output": {},                           # ← NEW
+        }                                                     # ← NEW
+
         try:
 
             yield {
@@ -100,12 +109,20 @@ async def run_debate(request: DebateRequest):
 
                 if node_name == "proponent":
 
+                    accumulated["proponent_output"] = update.get(   # ← NEW
+                        "proponent_output", ""                       # ← NEW
+                    )                                                # ← NEW
+
                     yield {
                         "event": "proponent",
                         "data": update.get("proponent_output", "")
                     }
 
                 elif node_name == "critic":
+
+                    accumulated["critic_output"] = update.get(      # ← NEW
+                        "critic_output", ""                         # ← NEW
+                    )                                               # ← NEW
 
                     yield {
                         "event": "critic",
@@ -115,11 +132,68 @@ async def run_debate(request: DebateRequest):
                 elif node_name == "moderator":
 
                     mod_output = update.get("moderator_output", {})
+                    print("\n===== MODERATOR OUTPUT =====")
+                    print(json.dumps(mod_output, indent=2))
+                    print("============================\n")
+
+                    accumulated["moderator_output"] = mod_output    # ← NEW
 
                     yield {
                         "event": "moderator",
                         "data": json.dumps(mod_output)
                     }
+
+            # ── Save to PostgreSQL after stream completes ─── ← NEW
+            try:                                                     # ← NEW
+                debate_data = schemas.DebateCreate(                 # ← NEW
+                    topic=request.decision,                         # ← NEW
+                    context=request.context or None,                # ← NEW
+                    proponent_argument=accumulated["proponent_output"] or None,   # ← NEW
+                    critic_argument=accumulated["critic_output"] or None,         # ← NEW
+                    moderator_verdict=accumulated["moderator_output"].get(        # ← NEW
+                        "verdict"                                   # ← NEW
+                    ),                                              # ← NEW
+                    decision=accumulated["moderator_output"].get(   # ← NEW
+                        "decision"                                  # ← NEW
+                    ),                                              # ← NEW
+                    confidence_score=accumulated["moderator_output"].get(        # ← NEW
+                        "confidence_score"                          # ← NEW
+                    ),                                              # ← NEW
+                    lean=accumulated["moderator_output"].get(       # ← NEW
+                        "lean"                                      # ← NEW
+                    ),                                              # ← NEW
+                )                                                   # ← NEW
+                                                                    # ← NEW
+                db = SessionLocal()                                 # ← NEW
+                try:    
+                    print("\n===== DEBATE DATA =====")
+                    print(debate_data.model_dump())
+                    print("=======================\n")
+                    print("Annotations:", schemas.DebateCreate.__annotations__)
+                    print("Fields:", schemas.DebateCreate.model_fields)                                                             # ← NEW
+                    saved = crud.create_debate(db, debate_data)     # ← NEW
+                    debate_id = saved.id                            # ← NEW
+                    db.close()                                      # ← NEW
+                except Exception:                                   # ← NEW
+                    db.rollback()                                   # ← NEW
+                    db.close()                                      # ← NEW
+                    raise                                           # ← NEW
+                                                                    # ← NEW
+                yield {                                             # ← NEW
+                    "event": "saved",                              # ← NEW
+                    "data": json.dumps({"debate_id": debate_id})   # ← NEW
+                }                                                   # ← NEW
+                                                                    # ← NEW
+            except Exception as db_error:                          # ← NEW
+                # DB failure does not kill the debate response.    # ← NEW
+                # The frontend already received all content.       # ← NEW
+                # Log the error and continue to the done event.   # ← NEW
+                traceback.print_exc()                              # ← NEW
+                yield {                                            # ← NEW
+                    "event": "save_error",                        # ← NEW
+                    "data": str(db_error)                         # ← NEW
+                }                                                  # ← NEW
+
             yield {
                 "event": "done",
                 "data": "Debate complete"
