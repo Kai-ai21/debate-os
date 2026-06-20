@@ -24,11 +24,18 @@ from datetime import datetime
 # ─────────────────────────────────────────────
 class DebateCreate(BaseModel):
     topic: str = Field(
-        ...,                           # ... means required (no default)
-        min_length=3,                  # Minimum 3 characters
-        max_length=500,                # Maximum 500 characters
+        ...,
+        min_length=3,
+        max_length=500,
         description="The debate topic or question"
     )
+    context: Optional[str] = None
+    proponent_argument: Optional[str] = None
+    critic_argument: Optional[str] = None
+    moderator_verdict: Optional[str] = None
+    decision: Optional[str] = None
+    confidence_score: Optional[float] = None
+    lean: Optional[str] = None
 
 class DebateUpdate(BaseModel):
     topic: Optional[str] = None

@@ -10,8 +10,8 @@ import traceback
 from graph import build_debate_graph, DebateState
 
 from database.database import SessionLocal          # ← NEW
-from database import crud, schemas 
-print("Schemas file:", schemas.__file__)                 # ← NEW
+from database import crud
+from database.schemas import DebateCreate           # ← direct import                 # ← NEW
 
 
 # ===================== CREATE APP =====================
@@ -145,7 +145,7 @@ async def run_debate(request: DebateRequest):
 
             # ── Save to PostgreSQL after stream completes ─── ← NEW
             try:                                                     # ← NEW
-                debate_data = schemas.DebateCreate(                 # ← NEW
+                debate_data = DebateCreate(                 # ← NEW
                     topic=request.decision,                         # ← NEW
                     context=request.context or None,                # ← NEW
                     proponent_argument=accumulated["proponent_output"] or None,   # ← NEW
@@ -169,8 +169,8 @@ async def run_debate(request: DebateRequest):
                     print("\n===== DEBATE DATA =====")
                     print(debate_data.model_dump())
                     print("=======================\n")
-                    print("Annotations:", schemas.DebateCreate.__annotations__)
-                    print("Fields:", schemas.DebateCreate.model_fields)                                                             # ← NEW
+                    print("Annotations:", DebateCreate.__annotations__)
+                    print("Fields:", DebateCreate.model_fields)                                                             # ← NEW
                     saved = crud.create_debate(db, debate_data)     # ← NEW
                     debate_id = saved.id                            # ← NEW
                     db.close()                                      # ← NEW
