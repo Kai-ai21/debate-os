@@ -165,12 +165,7 @@ async def run_debate(request: DebateRequest):
                 )                                                   # ← NEW
                                                                     # ← NEW
                 db = SessionLocal()                                 # ← NEW
-                try:    
-                    print("\n===== DEBATE DATA =====")
-                    print(debate_data.model_dump())
-                    print("=======================\n")
-                    print("Annotations:", DebateCreate.__annotations__)
-                    print("Fields:", DebateCreate.model_fields)                                                             # ← NEW
+                try:                                                                 # ← NEW
                     saved = crud.create_debate(db, debate_data)     # ← NEW
                     debate_id = saved.id                            # ← NEW
                     db.close()                                      # ← NEW
