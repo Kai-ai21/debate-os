@@ -75,8 +75,8 @@ export const streamDebate = async (topic, callbacks) => {
     },
 
     onerror(err) {
+      console.error(err);
       onError?.(err.message || 'Connection failed');
-      throw err;
     },
   });
 };
